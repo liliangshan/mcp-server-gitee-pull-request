@@ -2,10 +2,9 @@ const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
-// Auto-generate repository name from owner and head for log directory
-const OWNER = process.env.owner || '';
-const HEAD = process.env.head || '';
-const REPO_NAME = (OWNER && HEAD) ? `${OWNER}-${HEAD}`.replace(/[^a-zA-Z0-9_-]/g, '-') : '';
+// Auto-generate repository name from repo for log directory
+const REPO = process.env.repo || '';
+const REPO_NAME = REPO ? REPO.replace(/[^a-zA-Z0-9_-]/g, '-') : '';
 
 // 日志配置
 const getLogConfig = () => {
@@ -74,9 +73,9 @@ const maxRestarts = 10;
 
 // Function to start server
 function startServer() {
-  // Auto-generate REPO_NAME from owner and head
-  const autoRepoName = (process.env.owner && process.env.head) 
-    ? `${process.env.owner}-${process.env.head}`.replace(/[^a-zA-Z0-9_-]/g, '-') 
+  // Auto-generate REPO_NAME from repo name
+  const autoRepoName = process.env.repo 
+    ? process.env.repo.replace(/[^a-zA-Z0-9_-]/g, '-') 
     : '';
 
   // Create environment object
@@ -99,7 +98,7 @@ function startServer() {
   };
 
   writeLog('INFO', 'Starting MCP Gitee Pull Request server with environment:', {
-    REPO_NAME: autoRepoName || '(auto-generated from owner and head)',
+    REPO_NAME: autoRepoName || '(auto-generated from repo name)',
     PROJECT_NAME: env.PROJECT_NAME || '(not set)',
     owner: env.owner || '(not set)',
     repo: env.repo || '(not set)',

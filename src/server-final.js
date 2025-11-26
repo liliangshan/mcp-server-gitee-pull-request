@@ -71,8 +71,8 @@ const formatBranchName = (branchName) => {
 const HEAD = formatBranchName(HEAD_RAW);
 const BASE = formatBranchName(BASE_RAW);
 
-// Auto-generate REPO_NAME from owner and head (use raw head for naming)
-const REPO_NAME = `${OWNER}-${HEAD_RAW}`.replace(/[^a-zA-Z0-9_-]/g, '-');
+// Auto-generate REPO_NAME from repo name (use repo for naming)
+const REPO_NAME = REPO.replace(/[^a-zA-Z0-9_-]/g, '-');
 
 // Get log directory and filename
 const getLogConfig = () => {
@@ -385,7 +385,7 @@ const createGiteePullRequest = async (params) => {
 // 启动日志
 console.error('=== MCP Gitee Pull Request Server Starting ===');
 console.error(`Time: ${new Date().toISOString()}`);
-console.error(`Repository Name (auto-generated): ${REPO_NAME}`);
+console.error(`Repository Name (auto-generated from repo): ${REPO_NAME}`);
 console.error(`Owner: ${OWNER}`);
 console.error(`Repo: ${REPO}`);
 console.error(`Head: ${HEAD}`);
@@ -410,7 +410,7 @@ console.error('================================');
 class FinalMCPServer {
   constructor() {
     this.name = 'gitee-pull-request-mcp-server';
-    this.version = '1.0.2';
+    this.version = '1.0.3';
     this.initialized = false;
   }
 
@@ -588,7 +588,7 @@ class FinalMCPServer {
         };
       } else if (method === 'tools/list') {
         // Build tool name with repository name prefix for multi-instance support
-        // REPO_NAME is auto-generated from owner and head (format: owner-head)
+        // REPO_NAME is auto-generated from repo name
         const getToolName = (baseName) => {
           return REPO_NAME ? `${REPO_NAME}_${baseName}` : baseName;
         };
@@ -679,7 +679,7 @@ NOTE: The token is automatically used when creating Pull Requests, so you typica
         result = {
           tools: tools,
           environment: {
-            REPO_NAME: REPO_NAME, // Auto-generated from owner and head
+            REPO_NAME: REPO_NAME, // Auto-generated from repo name
             PROJECT_NAME: PROJECT_NAME || '',
             owner: OWNER,
             repo: REPO,
@@ -764,7 +764,7 @@ NOTE: The token is automatically used when creating Pull Requests, so you typica
         }
 
         // Remove repository name prefix if present to get the actual method name
-        // REPO_NAME is auto-generated from owner and head (format: owner-head)
+        // REPO_NAME is auto-generated from repo name
         let actualMethodName = name;
         if (REPO_NAME && name.startsWith(`${REPO_NAME}_`)) {
           actualMethodName = name.substring(REPO_NAME.length + 1);

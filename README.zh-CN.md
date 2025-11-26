@@ -75,7 +75,7 @@ export testers="tester1,tester2"
 export labels="bug,performance"
 
 # 可选：项目名称（用于多实例支持）
-# REPO_NAME 会自动从 owner 和 head 生成（格式：owner-head）
+# REPO_NAME 会自动从 repo 仓库名生成
 export PROJECT_NAME="custom-mgit"
 ```
 
@@ -150,7 +150,7 @@ npm run start-managed
 
 ### 多实例配置
 
-您可以为不同的仓库运行多个实例。`REPO_NAME` 会自动从 `owner` 和 `head` 生成（格式：`owner-head`）。使用 `PROJECT_NAME` 来区分不同的实例：
+您可以为不同的仓库运行多个实例。`REPO_NAME` 会自动从 `repo` 仓库名生成。使用 `PROJECT_NAME` 来区分不同的实例：
 
 ```json
 {
@@ -247,13 +247,13 @@ npm run start-managed
 
 ## 多实例支持
 
-此服务器通过 `REPO_NAME` 支持多实例，`REPO_NAME` 会自动从 `owner` 和 `head` 生成（格式：`owner-head`）。工具名称会以仓库名称作为前缀，避免冲突。
+此服务器通过 `REPO_NAME` 支持多实例，`REPO_NAME` 会自动从 `repo` 仓库名生成。工具名称会以仓库名称作为前缀，避免冲突。
 
 **注意：** `PROJECT_NAME` 是可选的，仅用于工具描述的品牌标识，不影响工具命名。
 
 **示例：**
-- 设置 `owner="liliangshan"` 和 `head="dev"`：工具名称为 `liliangshan-dev_pr`
-- 设置 `owner="org1"` 和 `head="feature"`：工具名称为 `org1-feature_pr`
+- 设置 `repo="mcp-server-gitee-pull-request"`：工具名称为 `mcp-server-gitee-pull-request_pr`
+- 设置 `repo="my-project"`：工具名称为 `my-project_pr`
 
 这允许您同时为不同的仓库运行多个实例。
 

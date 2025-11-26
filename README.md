@@ -75,7 +75,7 @@ export testers="tester1,tester2"
 export labels="bug,performance"
 
 # Optional: Project name for multi-instance support
-# REPO_NAME is auto-generated from owner and head (format: owner-head)
+# REPO_NAME is auto-generated from repo name
 export PROJECT_NAME="custom-mgit"
 ```
 
@@ -150,7 +150,7 @@ Add to your MCP settings (`.cursor/mcp.json` or VS Code settings):
 
 ### Multiple Instance Configuration
 
-You can run multiple instances for different repositories. The `REPO_NAME` is auto-generated from `owner` and `head` (format: `owner-head`). Use `PROJECT_NAME` to distinguish different instances:
+You can run multiple instances for different repositories. The `REPO_NAME` is auto-generated from `repo` name. Use `PROJECT_NAME` to distinguish different instances:
 
 ```json
 {
@@ -272,13 +272,13 @@ Get operation logs for debugging and monitoring.
 
 ## Multiple Instance Support
 
-This server supports multiple instances through the `REPO_NAME` which is automatically generated from `owner` and `head` (format: `owner-head`). Tool names are prefixed with the repository name to avoid conflicts.
+This server supports multiple instances through the `REPO_NAME` which is automatically generated from `repo` name. Tool names are prefixed with the repository name to avoid conflicts.
 
 **Note:** `PROJECT_NAME` is optional and only used for tool description branding. It does not affect tool naming.
 
 **Example:**
-- With `owner="liliangshan"` and `head="dev"`: Tool name is `liliangshan-dev_pr`
-- With `owner="org1"` and `head="feature"`: Tool name is `org1-feature_pr`
+- With `repo="mcp-server-gitee-pull-request"`: Tool name is `mcp-server-gitee-pull-request_pr`
+- With `repo="my-project"`: Tool name is `my-project_pr`
 
 This allows you to run multiple instances for different repositories simultaneously.
 
