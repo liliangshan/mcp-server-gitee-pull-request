@@ -90,7 +90,7 @@ export PROJECT_NAME="custom-mgit"
 4. After creation, you'll get `client_id` and `client_secret`
 5. Set them as environment variables along with your Gitee account credentials
 
-**Note:** The access token is automatically obtained using OAuth when needed. You can also use the `get_access_token` tool to manually retrieve a token.
+**Note:** The access token is automatically obtained using OAuth when needed. You can also use the `token` tool to manually retrieve a token.
 
 ## Usage
 
@@ -191,7 +191,7 @@ You can run multiple instances for different repositories. The `REPO_NAME` is au
 
 ## Available Tools
 
-### `gitee_create_pull_request`
+### `pr`
 
 Create a Pull Request on Gitee.
 
@@ -229,7 +229,7 @@ Create a Pull Request on Gitee.
 }
 ```
 
-### `get_access_token`
+### `token`
 
 Get Gitee access token using OAuth.
 
@@ -254,7 +254,7 @@ This tool retrieves an access token from Gitee OAuth API using the configured cr
 
 **Note:** The token is automatically used when creating Pull Requests, so you typically don't need to call this tool manually.
 
-### `get_operation_logs`
+### `logs`
 
 Get operation logs for debugging and monitoring.
 
@@ -277,8 +277,8 @@ This server supports multiple instances through the `REPO_NAME` which is automat
 **Note:** `PROJECT_NAME` is optional and only used for tool description branding. It does not affect tool naming.
 
 **Example:**
-- With `owner="liliangshan"` and `head="dev"`: Tool name is `liliangshan-dev_gitee_create_pull_request`
-- With `owner="org1"` and `head="feature"`: Tool name is `org1-feature_gitee_create_pull_request`
+- With `owner="liliangshan"` and `head="dev"`: Tool name is `liliangshan-dev_pr`
+- With `owner="org1"` and `head="feature"`: Tool name is `org1-feature_pr`
 
 This allows you to run multiple instances for different repositories simultaneously.
 

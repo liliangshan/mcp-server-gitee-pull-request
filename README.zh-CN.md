@@ -90,7 +90,7 @@ export PROJECT_NAME="custom-mgit"
 4. 创建后，您将获得 `client_id` 和 `client_secret`
 5. 将它们与您的 Gitee 账号凭证一起设置为环境变量
 
-**注意：** 访问令牌会在需要时通过 OAuth 自动获取。您也可以使用 `get_access_token` 工具手动获取令牌。
+**注意：** 访问令牌会在需要时通过 OAuth 自动获取。您也可以使用 `token` 工具手动获取令牌。
 
 ## 使用方法
 
@@ -191,7 +191,7 @@ npm run start-managed
 
 ## 可用工具
 
-### `gitee_create_pull_request`
+### `pr`
 
 在 Gitee 上创建 Pull Request。
 
@@ -229,7 +229,7 @@ npm run start-managed
 }
 ```
 
-### `get_operation_logs`
+### `logs`
 
 获取操作日志用于调试和监控。
 
@@ -252,8 +252,8 @@ npm run start-managed
 **注意：** `PROJECT_NAME` 是可选的，仅用于工具描述的品牌标识，不影响工具命名。
 
 **示例：**
-- 设置 `owner="liliangshan"` 和 `head="dev"`：工具名称为 `liliangshan-dev_gitee_create_pull_request`
-- 设置 `owner="org1"` 和 `head="feature"`：工具名称为 `org1-feature_gitee_create_pull_request`
+- 设置 `owner="liliangshan"` 和 `head="dev"`：工具名称为 `liliangshan-dev_pr`
+- 设置 `owner="org1"` 和 `head="feature"`：工具名称为 `org1-feature_pr`
 
 这允许您同时为不同的仓库运行多个实例。
 

@@ -410,19 +410,19 @@ console.error('================================');
 class FinalMCPServer {
   constructor() {
     this.name = 'gitee-pull-request-mcp-server';
-    this.version = '1.0.0';
+    this.version = '1.0.2';
     this.initialized = false;
   }
 
   // Create Gitee Pull Request
-  async gitee_create_pull_request(params) {
+  async pr(params) {
     const { title, body, draft } = params;
 
     try {
       const result = await createGiteePullRequest({ title, body, draft });
       
       // Log operation
-      logRequest('gitee_create_pull_request', { title, body, draft }, result);
+      logRequest('pr', { title, body, draft }, result);
 
       // Return the complete response object from Gitee API
       return {
@@ -435,7 +435,7 @@ class FinalMCPServer {
       };
     } catch (err) {
       // Log operation error
-      logRequest('gitee_create_pull_request', { title, body, draft }, null, err.error || err.message);
+      logRequest('pr', { title, body, draft }, null, err.error || err.message);
       
       // Return detailed error information including response data
       const errorMessage = `Gitee Pull Request creation failed: ${err.error || err.message}${err.statusCode ? ` (Status: ${err.statusCode})` : ''}`;
@@ -463,12 +463,12 @@ class FinalMCPServer {
   }
 
   // Get access token
-  async get_access_token(params) {
+  async token(params) {
     try {
       const token = await getAccessToken();
       
       // Log operation
-      logRequest('get_access_token', {}, { success: true, token: token.substring(0, 10) + '...' });
+      logRequest('token', {}, { success: true, token: token.substring(0, 10) + '...' });
 
       return {
         success: true,
@@ -478,14 +478,14 @@ class FinalMCPServer {
       };
     } catch (err) {
       // Log operation error
-      logRequest('get_access_token', {}, null, err.error || err.message);
+      logRequest('token', {}, null, err.error || err.message);
       
       throw new Error(`Failed to get access token: ${err.error || err.message}${err.statusCode ? ` (Status: ${err.statusCode})` : ''}`);
     }
   }
 
   // Get operation logs
-  async get_operation_logs(params) {
+  async logs(params) {
     const { limit = 50, offset = 0 } = params || {};
 
     // Validate parameters
@@ -604,7 +604,7 @@ class FinalMCPServer {
         // Build tools array
         const tools = [
           {
-            name: getToolName('gitee_create_pull_request'),
+            name: getToolName('pr'),
             description: getToolDescription(`Create a Pull Request on Gitee for repository "${OWNER}/${REPO}".
 
 IMPORTANT: 
@@ -644,7 +644,7 @@ NOTE: After creating the PR, the tool will return the PR URL and number. You can
             }
           },
           {
-            name: getToolName('get_access_token'),
+            name: getToolName('token'),
             description: getToolDescription(`Get Gitee access token using OAuth.
 
 This tool retrieves an access token from Gitee OAuth API using the configured credentials (username, password, client_id, client_secret).
@@ -658,7 +658,7 @@ NOTE: The token is automatically used when creating Pull Requests, so you typica
             }
           },
           {
-            name: getToolName('get_operation_logs'),
+            name: getToolName('logs'),
             description: getToolDescription('Get operation logs'),
             inputSchema: {
               type: 'object',
