@@ -1,0 +1,39 @@
+{
+  "name": "@liangshanli/mcp-server-gitee-pull-request",
+  "version": "1.0.0",
+  "description": "MCP server for creating Gitee Pull Requests with multiple instance support",
+  "main": "bin/cli.js",
+  "bin": {
+    "mcp-server-gitee-pull-request": "bin/cli.js"
+  },
+  "scripts": {
+    "start": "node bin/cli.js",
+    "dev": "node --inspect bin/cli.js",
+    "test": "node test-simple.js",
+    "start-managed": "node start-server.js",
+    "daemon": "node start-server.js",
+    "server": "node src/server-final.js"
+  },
+  "keywords": [
+    "mcp",
+    "gitee",
+    "pull-request",
+    "pr",
+    "server"
+  ],
+  "author": "liliangshan",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitee.com/liliangshan/mcp-server-gitee-pull-request.git"
+  },
+  "bugs": {
+    "url": "https://gitee.com/liliangshan/mcp-server-gitee-pull-request/issues"
+  },
+  "homepage": "https://gitee.com/liliangshan/mcp-server-gitee-pull-request#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  }
+}
+
