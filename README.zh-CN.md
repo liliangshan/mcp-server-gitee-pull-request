@@ -9,6 +9,7 @@
 - ✅ 可配置审查人员（assignees 和 testers）
 - ✅ 支持标签并验证格式
 - ✅ 支持草稿 PR
+- ✅ 自动审查、测试和合并工作流
 - ✅ 操作日志记录
 - ✅ 错误处理和恢复
 
@@ -77,6 +78,16 @@ export labels="bug,performance"
 # 可选：项目名称（用于多实例支持）
 # REPO_NAME 会自动从 repo 仓库名生成
 export PROJECT_NAME="custom-mgit"
+
+# 可选：自动化工作流开关（默认：false）
+# AUTO_REVIEW: PR 创建后自动审查（成功时返回 204 No Content）
+export AUTO_REVIEW="false"
+
+# AUTO_TEST: 审查后自动测试（成功时返回 204 No Content）
+export AUTO_TEST="false"
+
+# AUTO_MERGE: 测试成功后自动合并（仅在 AUTO_TEST 为 false 或测试成功时合并）
+export AUTO_MERGE="false"
 ```
 
 ### 获取 OAuth 应用凭证
@@ -141,7 +152,10 @@ npm run start-managed
         "assignees": "username1,username2",
         "testers": "tester1,tester2",
         "labels": "bug,performance",
-        "PROJECT_NAME": "custom-mgit"
+        "PROJECT_NAME": "custom-mgit",
+        "AUTO_REVIEW": "false",
+        "AUTO_TEST": "false",
+        "AUTO_MERGE": "false"
       }
     }
   }
@@ -167,7 +181,10 @@ npm run start-managed
         "repo": "repo1",
         "head": "dev",
         "base": "main",
-        "PROJECT_NAME": "custom-mgit"
+        "PROJECT_NAME": "custom-mgit",
+        "AUTO_REVIEW": "true",
+        "AUTO_TEST": "true",
+        "AUTO_MERGE": "true"
       }
     },
     "gitee-pr-repo2": {
@@ -202,6 +219,17 @@ npm run start-managed
 
 **注意：** 标签可以通过 `labels` 环境变量配置。如果设置了，将自动添加到该工具创建的所有 Pull Request 中。
 
+**自动化工作流：**
+- 如果 `AUTO_REVIEW=true`，PR 创建后将自动审查
+- 如果 `AUTO_TEST=true`，审查后将自动测试（如果审查被禁用，则在创建后测试）
+- 如果 `AUTO_MERGE=true`，测试成功后自动合并（如果测试被禁用，则在创建后合并）
+
+**工作流顺序：**
+1. 创建 PR
+2. 自动审查（如果 `AUTO_REVIEW=true`）
+3. 自动测试（如果 `AUTO_TEST=true`）
+4. 自动合并（如果 `AUTO_MERGE=true` 且测试成功或测试被禁用）
+
 **示例：**
 ```json
 {
@@ -225,9 +253,30 @@ npm run start-managed
   },
   "url": "https://gitee.com/owner/repo/pulls/42",
   "number": 42,
-  "message": "Pull Request created successfully. PR #42: 添加新功能"
+  "message": "Pull Request created successfully. PR #42: 添加新功能",
+  "auto_review": {
+    "success": true,
+    "review": null,
+    "message": "Auto review completed for PR #42"
+  },
+  "auto_test": {
+    "success": true,
+    "test": null,
+    "message": "Auto test completed for PR #42"
+  },
+  "auto_merge": {
+    "success": true,
+    "merge": {
+      "sha": "...",
+      "merged": true,
+      "message": "Pull Request 已成功合并"
+    },
+    "message": "Auto merge completed for PR #42"
+  }
 }
 ```
+
+**注意：** `auto_review`、`auto_test` 和 `auto_merge` 字段仅在启用相应的自动化工作流并成功执行时才会包含。审查和测试 API 在成功时返回 204 No Content，因此成功时 `review` 和 `test` 字段将为 `null`。
 
 ### `logs`
 

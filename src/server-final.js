@@ -22,6 +22,9 @@ const BASE_RAW = process.env.base || '';
 const ASSIGNEES = process.env.assignees || '';
 const TESTERS = process.env.testers || '';
 const LABELS_ENV = (process.env.labels || '').trim(); // Optional labels from environment
+const AUTO_REVIEW = process.env.AUTO_REVIEW === 'true' || process.env.AUTO_REVIEW === '1';
+const AUTO_TEST = process.env.AUTO_TEST === 'true' || process.env.AUTO_TEST === '1';
+const AUTO_MERGE = process.env.AUTO_MERGE === 'true' || process.env.AUTO_MERGE === '1';
 
 // Get project name for multi-instance support
 const PROJECT_NAME = process.env.PROJECT_NAME || '';
@@ -253,9 +256,26 @@ const makeGiteeRequest = async (method, path, data = null, accessToken = null) =
       });
 
       res.on('end', () => {
+        // Check status code first - 200-299 are considered success
+        const isSuccess = res.statusCode >= 200 && res.statusCode < 300;
+        
+        // If response is empty and status is success, return success
+        if (isSuccess && (!responseData || responseData.trim() === '')) {
+          console.error('Gitee API returned empty response (success):', {
+            statusCode: res.statusCode,
+            method: options.method,
+            path: options.path
+          });
+          resolve({
+            statusCode: res.statusCode,
+            data: null
+          });
+          return;
+        }
+        
         try {
           const parsed = JSON.parse(responseData);
-          if (res.statusCode >= 200 && res.statusCode < 300) {
+          if (isSuccess) {
             resolve({
               statusCode: res.statusCode,
               data: parsed
@@ -276,11 +296,43 @@ const makeGiteeRequest = async (method, path, data = null, accessToken = null) =
             });
           }
         } catch (err) {
-          reject({
-            statusCode: res.statusCode,
-            error: `Failed to parse response: ${err.message}`,
-            rawResponse: responseData
-          });
+          // If status code is success (200-299), treat as success even if JSON parsing fails
+          if (isSuccess) {
+            console.error('Gitee API returned success status but response is not valid JSON:', {
+              statusCode: res.statusCode,
+              method: options.method,
+              path: options.path,
+              error: err.message,
+              responseLength: responseData.length,
+              responseHeaders: res.headers,
+              rawResponse: responseData,
+              rawResponsePreview: responseData.substring(0, 500) + (responseData.length > 500 ? '...' : '')
+            });
+            // Still return success since status code indicates success
+            resolve({
+              statusCode: res.statusCode,
+              data: responseData || null,
+              rawResponse: responseData
+            });
+          } else {
+            // Log detailed debug information when JSON parsing fails and status is not success
+            console.error('Failed to parse JSON response:', {
+              statusCode: res.statusCode,
+              method: options.method,
+              path: options.path,
+              error: err.message,
+              responseLength: responseData.length,
+              responseHeaders: res.headers,
+              rawResponse: responseData,
+              rawResponsePreview: responseData.substring(0, 500) + (responseData.length > 500 ? '...' : '')
+            });
+            reject({
+              statusCode: res.statusCode,
+              error: `Failed to parse response: ${err.message}`,
+              rawResponse: responseData,
+              responseHeaders: res.headers
+            });
+          }
         }
       });
     });
@@ -298,6 +350,71 @@ const makeGiteeRequest = async (method, path, data = null, accessToken = null) =
 
     req.end();
   });
+};
+
+// Review Gitee Pull Request
+const reviewGiteePullRequest = async (prNumber, force = false) => {
+  if (!prNumber || typeof prNumber !== 'number') {
+    throw new Error('Missing or invalid PR number parameter');
+  }
+
+  // Build request body
+  const requestBody = {
+    force: force
+  };
+
+  // Make API request
+  const apiPath = `/repos/${OWNER}/${REPO}/pulls/${prNumber}/review`;
+  
+  // Log request body for debugging
+  console.error(`Reviewing Pull Request #${prNumber} with request body:`, {
+    force: requestBody.force
+  });
+  
+  const response = await makeGiteeRequest('POST', apiPath, requestBody);
+
+  return response;
+};
+
+// Test Gitee Pull Request
+const testGiteePullRequest = async (prNumber, force = false) => {
+  if (!prNumber || typeof prNumber !== 'number') {
+    throw new Error('Missing or invalid PR number parameter');
+  }
+
+  // Build request body
+  const requestBody = {
+    force: force
+  };
+
+  // Make API request
+  const apiPath = `/repos/${OWNER}/${REPO}/pulls/${prNumber}/test`;
+  
+  // Log request body for debugging
+  console.error(`Testing Pull Request #${prNumber} with request body:`, {
+    force: requestBody.force
+  });
+  
+  const response = await makeGiteeRequest('POST', apiPath, requestBody);
+
+  return response;
+};
+
+// Merge Gitee Pull Request
+const mergeGiteePullRequest = async (prNumber) => {
+  if (!prNumber || typeof prNumber !== 'number') {
+    throw new Error('Missing or invalid PR number parameter');
+  }
+
+  // Make API request (PUT method, no request body needed for merge)
+  const apiPath = `/repos/${OWNER}/${REPO}/pulls/${prNumber}/merge`;
+  
+  // Log merge request
+  console.error(`Merging Pull Request #${prNumber}...`);
+  
+  const response = await makeGiteeRequest('PUT', apiPath, null);
+
+  return response;
 };
 
 // Create Gitee Pull Request
@@ -390,6 +507,9 @@ console.error(`Owner: ${OWNER}`);
 console.error(`Repo: ${REPO}`);
 console.error(`Head: ${HEAD}`);
 console.error(`Base: ${BASE}`);
+console.error(`AUTO_REVIEW: ${AUTO_REVIEW}`);
+console.error(`AUTO_TEST: ${AUTO_TEST}`);
+console.error(`AUTO_MERGE: ${AUTO_MERGE}`);
 console.error(`Username (from env.username): ${USERNAME ? (USERNAME.length > 10 ? USERNAME.substring(0, 10) + '***' : USERNAME) : '(not set)'}`);
 console.error(`Username length: ${USERNAME.length}`);
 console.error(`Client ID: ${CLIENT_ID ? CLIENT_ID.substring(0, 8) + '***' : '(not set)'}`);
@@ -410,7 +530,7 @@ console.error('================================');
 class FinalMCPServer {
   constructor() {
     this.name = 'gitee-pull-request-mcp-server';
-    this.version = '1.0.3';
+    this.version = '1.0.4';
     this.initialized = false;
   }
 
@@ -424,8 +544,60 @@ class FinalMCPServer {
       // Log operation
       logRequest('pr', { title, body, draft }, result);
 
+      // Auto review if enabled
+      let reviewResult = null;
+      if (AUTO_REVIEW && result.data && result.data.number) {
+        try {
+          console.error(`AUTO_REVIEW is enabled, automatically reviewing PR #${result.data.number}...`);
+          reviewResult = await reviewGiteePullRequest(result.data.number, false);
+          console.error(`✓ Auto review completed for PR #${result.data.number}`);
+          logRequest('auto_review', { prNumber: result.data.number, force: false }, reviewResult);
+        } catch (reviewErr) {
+          console.error(`✗ Auto review failed for PR #${result.data.number}:`, reviewErr.error || reviewErr.message);
+          logRequest('auto_review', { prNumber: result.data.number, force: false }, null, reviewErr.error || reviewErr.message);
+          // Don't fail the entire operation if review fails, just log the error
+        }
+      }
+
+      // Auto test if enabled (after review if review was performed)
+      let testResult = null;
+      if (AUTO_TEST && result.data && result.data.number) {
+        try {
+          console.error(`AUTO_TEST is enabled, automatically testing PR #${result.data.number}...`);
+          testResult = await testGiteePullRequest(result.data.number, false);
+          console.error(`✓ Auto test completed for PR #${result.data.number}`);
+          logRequest('auto_test', { prNumber: result.data.number, force: false }, testResult);
+        } catch (testErr) {
+          console.error(`✗ Auto test failed for PR #${result.data.number}:`, testErr.error || testErr.message);
+          logRequest('auto_test', { prNumber: result.data.number, force: false }, null, testErr.error || testErr.message);
+          // Don't fail the entire operation if test fails, just log the error
+        }
+      }
+
+      // Auto merge if enabled (after test if test was performed and successful)
+      let mergeResult = null;
+      if (AUTO_MERGE && result.data && result.data.number) {
+        // Only merge if test was successful (testResult exists means test succeeded, even if data is null for 204 responses)
+        // Or if AUTO_TEST is false (no test required)
+        const shouldMerge = (!AUTO_TEST || testResult !== null);
+        if (shouldMerge) {
+          try {
+            console.error(`AUTO_MERGE is enabled, automatically merging PR #${result.data.number}...`);
+            mergeResult = await mergeGiteePullRequest(result.data.number);
+            console.error(`✓ Auto merge completed for PR #${result.data.number}`);
+            logRequest('auto_merge', { prNumber: result.data.number }, mergeResult);
+          } catch (mergeErr) {
+            console.error(`✗ Auto merge failed for PR #${result.data.number}:`, mergeErr.error || mergeErr.message);
+            logRequest('auto_merge', { prNumber: result.data.number }, null, mergeErr.error || mergeErr.message);
+            // Don't fail the entire operation if merge fails, just log the error
+          }
+        } else {
+          console.error(`⚠ AUTO_MERGE is enabled but test failed, skipping merge for PR #${result.data.number}`);
+        }
+      }
+
       // Return the complete response object from Gitee API
-      return {
+      const response = {
         success: true,
         pull_request: result.data,
         response: result.data, // Include full response object
@@ -433,6 +605,35 @@ class FinalMCPServer {
         number: result.data.number || null,
         message: `Pull Request created successfully. PR #${result.data.number || 'N/A'}: ${result.data.title || title}`
       };
+
+      // Include review result if auto review was performed
+      if (reviewResult) {
+        response.auto_review = {
+          success: true,
+          review: reviewResult.data,
+          message: `Auto review completed for PR #${result.data.number}`
+        };
+      }
+
+      // Include test result if auto test was performed
+      if (testResult) {
+        response.auto_test = {
+          success: true,
+          test: testResult.data,
+          message: `Auto test completed for PR #${result.data.number}`
+        };
+      }
+
+      // Include merge result if auto merge was performed
+      if (mergeResult) {
+        response.auto_merge = {
+          success: true,
+          merge: mergeResult.data,
+          message: `Auto merge completed for PR #${result.data.number}`
+        };
+      }
+
+      return response;
     } catch (err) {
       // Log operation error
       logRequest('pr', { title, body, draft }, null, err.error || err.message);

@@ -9,6 +9,7 @@ A MCP server for creating Pull Requests on Gitee with multiple instance support.
 - ✅ Configurable reviewers (assignees and testers)
 - ✅ Label support with validation
 - ✅ Draft PR support
+- ✅ Automatic review, test, and merge workflow
 - ✅ Operation logging
 - ✅ Error handling and recovery
 
@@ -77,6 +78,16 @@ export labels="bug,performance"
 # Optional: Project name for multi-instance support
 # REPO_NAME is auto-generated from repo name
 export PROJECT_NAME="custom-mgit"
+
+# Optional: Automatic workflow flags (default: false)
+# AUTO_REVIEW: Automatically review PR after creation (returns 204 No Content on success)
+export AUTO_REVIEW="false"
+
+# AUTO_TEST: Automatically test PR after review (returns 204 No Content on success)
+export AUTO_TEST="false"
+
+# AUTO_MERGE: Automatically merge PR after test succeeds (only merges if AUTO_TEST is false or test succeeds)
+export AUTO_MERGE="false"
 ```
 
 ### Getting OAuth Application Credentials
@@ -141,7 +152,10 @@ Add to your MCP settings (`.cursor/mcp.json` or VS Code settings):
         "assignees": "username1,username2",
         "testers": "tester1,tester2",
         "labels": "bug,performance",
-        "PROJECT_NAME": "custom-mgit"
+        "PROJECT_NAME": "custom-mgit",
+        "AUTO_REVIEW": "false",
+        "AUTO_TEST": "false",
+        "AUTO_MERGE": "false"
       }
     }
   }
@@ -167,7 +181,10 @@ You can run multiple instances for different repositories. The `REPO_NAME` is au
         "repo": "repo1",
         "head": "dev",
         "base": "main",
-        "PROJECT_NAME": "custom-mgit"
+        "PROJECT_NAME": "custom-mgit",
+        "AUTO_REVIEW": "true",
+        "AUTO_TEST": "true",
+        "AUTO_MERGE": "true"
       }
     },
     "gitee-pr-repo2": {
@@ -202,6 +219,17 @@ Create a Pull Request on Gitee.
 
 **Note:** Labels can be configured via the `labels` environment variable. If set, they will be automatically added to all Pull Requests created by this tool.
 
+**Automatic Workflow:**
+- If `AUTO_REVIEW=true`, the PR will be automatically reviewed after creation
+- If `AUTO_TEST=true`, the PR will be automatically tested after review (or after creation if review is disabled)
+- If `AUTO_MERGE=true`, the PR will be automatically merged after test succeeds (or after creation if test is disabled)
+
+**Workflow Order:**
+1. Create PR
+2. Auto Review (if `AUTO_REVIEW=true`)
+3. Auto Test (if `AUTO_TEST=true`)
+4. Auto Merge (if `AUTO_MERGE=true` and test succeeded or test is disabled)
+
 **Example:**
 ```json
 {
@@ -225,9 +253,30 @@ Create a Pull Request on Gitee.
   },
   "url": "https://gitee.com/owner/repo/pulls/42",
   "number": 42,
-  "message": "Pull Request created successfully. PR #42: Add new feature"
+  "message": "Pull Request created successfully. PR #42: Add new feature",
+  "auto_review": {
+    "success": true,
+    "review": null,
+    "message": "Auto review completed for PR #42"
+  },
+  "auto_test": {
+    "success": true,
+    "test": null,
+    "message": "Auto test completed for PR #42"
+  },
+  "auto_merge": {
+    "success": true,
+    "merge": {
+      "sha": "...",
+      "merged": true,
+      "message": "Pull Request 已成功合并"
+    },
+    "message": "Auto merge completed for PR #42"
+  }
 }
 ```
+
+**Note:** The `auto_review`, `auto_test`, and `auto_merge` fields are only included if the corresponding automatic workflow is enabled and executed successfully. Review and test APIs return 204 No Content on success, so `review` and `test` fields will be `null` when successful.
 
 ### `token`
 
