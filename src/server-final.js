@@ -603,7 +603,7 @@ class FinalMCPServer {
         response: result.data, // Include full response object
         url: result.data.html_url || result.data.url || null,
         number: result.data.number || null,
-        message: `Pull Request created successfully. PR #${result.data.number || 'N/A'}: ${result.data.title || title}`
+        message: `🎉 Pull Request created successfully!\n\n📋 **PR Details:**\n• Number: #${result.data.number || 'N/A'}\n• Title: ${result.data.title || title}\n• URL: ${result.data.html_url || result.data.url || 'N/A'}\n\n🔗 **Direct Link:** [View PR #${result.data.number || 'N/A'}](${result.data.html_url || result.data.url || '#'})\n\n💡 **Next Steps:**\n• Review the changes in the PR\n• Request reviews from team members if needed\n• Monitor CI/CD pipeline status\n• Merge when ready (if auto-merge is not enabled)`
       };
 
       // Include review result if auto review was performed
@@ -982,14 +982,27 @@ NOTE: The token is automatically used when creating Pull Requests, so you typica
         const toolResult = await this[actualMethodName](args || {});
 
         // Tool call results need to be wrapped in content
-        result = {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(toolResult, null, 2)
-            }
-          ]
-        };
+        // For PR creation, return formatted Markdown content
+        if (actualMethodName === 'pr' && toolResult.success) {
+          result = {
+            content: [
+              {
+                type: 'text',
+                text: toolResult.message
+              }
+            ]
+          };
+        } else {
+          // For other tools, return JSON format
+          result = {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(toolResult, null, 2)
+              }
+            ]
+          };
+        }
       } else if (method === 'ping') {
         logRequest('ping', {}, { status: 'pong' }, null);
         result = { pong: true };
