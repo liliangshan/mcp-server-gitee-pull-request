@@ -603,7 +603,7 @@ class FinalMCPServer {
         response: result.data, // Include full response object
         url: result.data.html_url || result.data.url || null,
         number: result.data.number || null,
-        message: `🎉 Pull Request created successfully!\n\n📋 **PR Details:**\n• Number: #${result.data.number || 'N/A'}\n• Title: ${result.data.title || title}\n• URL: ${result.data.html_url || result.data.url || 'N/A'}\n\n🔗 **Direct Link:** [View PR #${result.data.number || 'N/A'}](${result.data.html_url || result.data.url || '#'})\n\n💡 **Next Steps:**\n• Review the changes in the PR\n• Request reviews from team members if needed\n• Monitor CI/CD pipeline status\n• Merge when ready (if auto-merge is not enabled)`
+        message: `🎉 Pull Request created successfully!\n\n📋 **PR Details:**\n• Number: #${result.data.number || 'N/A'}\n• Title: ${result.data.title || title}\n• URL: ${result.data.html_url || result.data.url || 'N/A'}\n\n🔗 **Direct Link:** [View PR #${result.data.number || 'N/A'}](${result.data.html_url || result.data.url || '#'})\n\n⚠️ **IMPORTANT:** Please share this PR link with the team:\n**[${result.data.title || title}](https://gitee.com/${OWNER}/${REPO}/pulls/${result.data.number || 'N/A'})**\n\n📢 **PR URL for AI/Team:** [https://gitee.com/${OWNER}/${REPO}/pulls/${result.data.number || 'N/A'}](https://gitee.com/${OWNER}/${REPO}/pulls/${result.data.number || 'N/A'})\n\n💡 **Next Steps:**\n• Review the changes in the PR\n• Request reviews from team members if needed\n• Monitor CI/CD pipeline status\n• Merge when ready (if auto-merge is not enabled)`
       };
 
       // Include review result if auto review was performed
